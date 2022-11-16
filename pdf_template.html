@@ -1,0 +1,76 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчет</title>
+    <style>
+        * {
+            text-align: center;
+            font-family: "Verdana", sans-serif;
+        }
+        table {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 5px;
+        }
+        th {
+            font-weight: bold;
+        }
+        .area-stats th {
+            width: 185px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Аналитика по зарплатам и городам для профессии {{ vacancy_name }}</h1>
+    <img src="{{ abs_path }}">
+    <h2>Статистика по годам</h2>
+    <table>
+        <tr>
+            <th>Год</th>
+            <th>Cредняя зарплата</th>
+            <th>Средняя зарплата - {{ vacancy_name }}</th>
+            <th>Количество вакансий</th>
+            <th>Количество вакансий - {{ vacancy_name }}</th>
+        </tr>
+        {% for year in salary_by_year %}
+        <tr>
+            <td>{{ year }}</td>
+            <td>{{ salary_by_year[year] }}</td>
+            <td>{{ selected_vacancy_salary_by_year[year] }}</td>
+            <td>{{ vacancies_count_by_year[year] }}</td>
+            <td>{{ selected_vacancy_count_by_year[year] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <h2>Статистика по городам</h2>
+    <div class="area-stats" style="display: flex;">
+        <div><table style="float: left; margin-left: 10px; margin-right: 20px;">
+            <tr>
+                <th>Город</th>
+                <th>Уровень зарплат</th>
+            </tr>
+            {% for area in salary_by_area %}
+            <tr>
+                <td>{{ area }}</td>
+                <td>{{ salary_by_area[area] }}</td>
+            </tr>
+            {% endfor %}
+        </table></div>
+        <div><table style="float: left;">
+            <tr>
+                <th>Город</th>
+                <th>Доля вакансий</th>
+            </tr>
+            {% for area in fraction_by_area %}
+            <tr>
+                <td>{{ area }}</td>
+                <td>{{ (fraction_by_area[area] * 100)|round(2)|replace(".", ",") }}%</td>
+            </tr>
+            {% endfor %}
+        </table></div>
+    </div>
+</body>
+</html>
