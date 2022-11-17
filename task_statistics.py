@@ -378,7 +378,7 @@ class Report:
              "vacancies_count_by_year": vacancies_count_by_year,
              "selected_vacancy_count_by_year": selected_vacancy_count_by_year,
              "salary_by_area": salary_by_area, "fraction_by_area": fraction_by_area})
-        config = pdfkit.configuration(wkhtmltopdf=r'./wkhtmltox/bin/wkhtmltopdf.exe')
+        config = pdfkit.configuration(wkhtmltopdf=r'D:\Users\ek110\Desktop\Программы\Прочее ДЗ\Технологии программирования\wkhtmltox\bin\wkhtmltopdf.exe')
         pdfkit.from_string(pdf_template, Report.pdf_output_filename, configuration=config,
                            options={'enable-local-file-access': None})
 
@@ -394,4 +394,5 @@ class Report:
             return '-\n'.join(str_splitted_by_hyphen)
 
 
-app = InputConnect()
+if __name__ == "__main__":
+    app = InputConnect()
