@@ -4,7 +4,7 @@ import task_statistics
 
 class Launcher:
 
-    very_important_var = 42
+    very_important_var = "Очень важная переменная"
 
     def __init__(self):
         self.output_type = input()
