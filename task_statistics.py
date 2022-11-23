@@ -2,6 +2,7 @@ import csv
 import re
 import itertools
 import datetime
+import dateutil.tz
 import os
 
 from openpyxl import Workbook
@@ -37,7 +38,30 @@ class Vacancy:
         self.name = name
         self.salary = salary
         self.area_name = area_name
-        self.published_at = datetime.datetime.strptime(published_at, "%Y-%m-%dT%H:%M:%S%z")
+        self.published_at = Vacancy.convert_str_to_datetime_using_string_parsing(published_at)
+
+    # @staticmethod
+    # def convert_str_to_datetime_using_strptime(s: str) -> datetime:
+    #     return datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%S%z")
+
+    @staticmethod
+    def convert_str_to_datetime_using_string_parsing(s: str) -> datetime:
+        year = int(s[:4])
+        month = int(s[5:7])
+        day = int(s[8:10])
+        hour = int(s[11:13])
+        minute = int(s[14:16])
+        second = int(s[17:19])
+        timezone_offset_hours_int = int(s[19:22])
+        timezone_delta = datetime.timedelta(hours=timezone_offset_hours_int)
+        if timezone_offset_hours_int < 0:
+            timezone_delta *= -1
+        timezone_offset = dateutil.tz.tzoffset(None, timezone_delta)
+        return datetime.datetime(year, month, day, hour, minute, second, tzinfo=timezone_offset)
+
+    # @staticmethod
+    # def convert_str_to_datetime_using_dateutil_parser(s: str) -> datetime:
+    #     return dateutil.parser.parse(s)
 
 
 class Salary:

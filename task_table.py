@@ -1,5 +1,8 @@
 import csv
 import re
+
+import dateutil.tz
+import dateutil.parser
 import prettytable
 import datetime
 
@@ -59,8 +62,8 @@ class Vacancy:
         ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").area_name
         'Екатеринбург'
         >>> Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
-        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").published_at
-        datetime.datetime(2022, 11, 23, 0, 0, tzinfo=datetime.timezone(datetime.timedelta(seconds=10800)))
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").published_at.isoformat()
+        '2022-11-23T00:00:00+03:00'
         """
         self.name = name
         self.description = description
@@ -70,8 +73,30 @@ class Vacancy:
         self.employer_name = employer_name
         self.salary = salary
         self.area_name = area_name
-        self.published_at = datetime.datetime.strptime(published_at, "%Y-%m-%dT%H:%M:%S%z")
+        self.published_at = Vacancy.convert_str_to_datetime_using_string_parsing(published_at)
 
+    # @staticmethod
+    # def convert_str_to_datetime_using_strptime(s: str) -> datetime:
+    #     return datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%S%z")
+
+    @staticmethod
+    def convert_str_to_datetime_using_string_parsing(s: str) -> datetime:
+        year = int(s[:4])
+        month = int(s[5:7])
+        day = int(s[8:10])
+        hour = int(s[11:13])
+        minute = int(s[14:16])
+        second = int(s[17:19])
+        timezone_offset_hours_int = int(s[19:22])
+        timezone_delta = datetime.timedelta(hours=timezone_offset_hours_int)
+        if timezone_offset_hours_int < 0:
+            timezone_delta *= -1
+        timezone_offset = dateutil.tz.tzoffset(None, timezone_delta)
+        return datetime.datetime(year, month, day, hour, minute, second, tzinfo=timezone_offset)
+
+    # @staticmethod
+    # def convert_str_to_datetime_using_dateutil_parser(s: str) -> datetime:
+    #     return dateutil.parser.parse(s)
 
 class Salary:
     """Класс для представления зарплаты.
