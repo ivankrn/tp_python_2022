@@ -5,9 +5,35 @@ import datetime
 
 
 class Vacancy:
+    """Класс для представления вакансии.
+
+    Attributes:
+        name (str): Название вакансии
+        description (str): Описание вакансии
+        key_skills (list): Список навыков, необходимых для вакансии
+        experience_id (str): Необходимый опыт работы
+        premium (bool): Тип вакансии (премиум или нет)
+        employer_name (str): Имя компании
+        salary (Salary): Оклад вакансии
+        area_name (str): Регион вакансии
+        published_at (datetime): Время публикации вакансии
+    """
 
     def __init__(self, name: str, description: str, key_skills: list, experience_id: str, premium: str,
                  employer_name: str, salary: "Salary", area_name: str, published_at: str):
+        """Инициализирует объект Vacancy, выполняет конвертацию для полей premium (в bool) и published_at (в datetime).
+
+        Args:
+            name (str): Название вакансии
+            description (str): Описание вакансии
+            key_skills (list): Список навыков, необходимых для вакансии
+            experience_id (str): Необходимый опыт работы
+            premium (str): Тип вакансии (премиум или нет)
+            employer_name (str): Имя компании
+            salary (Salary): Оклад вакансии
+            area_name (str): Регион вакансии
+            published_at (str): Время публикации вакансии
+        """
         self.name = name
         self.description = description
         self.key_skills = key_skills
@@ -20,6 +46,14 @@ class Vacancy:
 
 
 class Salary:
+    """Класс для представления зарплаты.
+
+    Attributes:
+        currency_to_rub (dict): (class attribute) Словарь для конвертации валют в рубль по курсу
+        salary_from (int): Нижняя граница вилки оклада
+        salary_to (int): Верхняя граница вилки оклада
+        salary_currency (str): Валюта оклада
+    """
 
     currency_to_rub = {
         "AZN": 35.68,
@@ -35,12 +69,25 @@ class Salary:
     }
 
     def __init__(self, salary_from: int, salary_to: int, salary_gross: str, salary_currency: str):
+        """Инициализирует объект Salary.
+
+        Args:
+            salary_from (int): Нижняя граница вилки оклада
+            salary_to (int): Верхняя граница вилки оклада
+            salary_gross (str): Гросс
+            salary_currency (str): Валюта оклада
+        """
         self.salary_from = salary_from
         self.salary_to = salary_to
         self.salary_gross = salary_gross
         self.salary_currency = salary_currency
 
     def get_rub_average(self):
+        """Вычисляет среднюю зарплату из вилки оклада и переводит в рубли, если необходимо.
+
+        Returns:
+            float: Средняя зарплата в рублях
+        """
         salary_average = (self.salary_from + self.salary_to) / 2
         if self.salary_currency == "RUR":
             return salary_average
@@ -48,30 +95,68 @@ class Salary:
 
 
 class DataSet:
+    """Класс для представления данных вакансий.
+
+    Attributes:
+        __file_name (str): Имя файла для обработки данных
+        __list_naming (list): Названия столбцов таблицы
+        reader (_reader): Объект чтения для чтения строк из файла
+        vacancies (list): Список вакансий
+        vacancies_length_before_filtering (int): Количество вакансий до фильтрации по параметру
+    """
 
     def __init__(self, file_name: str):
+        """Инициализирует объект DataSet.
+
+        Args:
+            file_name (str): Имя файла для обработки данных
+        """
         self.__file_name = file_name
         self.__list_naming = None
 
-    def get_clear_value(self, value):
+    def get_clear_value(self, value: list):
+        """Возвращает новый список, состоящий из строк исходного списка, очищенных от html тегов и лишних пробелов.
+
+        Args:
+            value (list): Список строк для очистки
+
+        Returns:
+            list: Список строк, очищенных от html тегов и лишних пробелов
+        """
         temp = value.split('\n')
         result = [self.get_clear_str(s) for s in temp]
         return '\n'.join(result)
 
-    def get_clear_str(self, s):
+    def get_clear_str(self, s: str):
+        """Очищает строку от html тегов и лишних пробелов.
+
+        Args:
+            s (str): Строка для очистки
+
+        Returns:
+            str: Строка, очищенная от html тегов и лишних пробелов
+        """
         str_without_tags = re.sub("<.*?>", '', s)
         str_without_spaces = ' '.join(str_without_tags.split())
         return str_without_spaces
 
     def is_empty_file(self):
+        """Возвращает True, если файл пуст, либо False, если файл не пуст.
+
+        Returns:
+            bool: True или False
+        """
         return False if self.__list_naming else True
 
     def csv_reader(self):
+        """Открывает файл для чтения и получает названия столбцов csv файла."""
         vacancies = open(self.__file_name, 'r', encoding="utf-8-sig")
         self.reader = csv.reader(vacancies)
         self.__list_naming = next(self.reader)
 
     def csv_filter(self):
+        """Считывает вакансии из файла, содержащие все необходимые данные, очищает их от лишних пробелов и html тегов
+         и сохраняет их в список вакансий, а также количество вакансий до фильтрации по параметру."""
         self.vacancies = []
         for line in self.reader:
             if len(line) == len(self.__list_naming) and '' not in line:
@@ -95,11 +180,23 @@ class DataSet:
         self.vacancies_length_before_filtering = len(self.vacancies)
 
     def formatter(self, filter_key=None, filter_value=None):
+        """Выполняет фильтрацию списка вакансий, если задан параметр фильтрации и его значение.
+
+        Args:
+            filter_key (str): Параметр фильтрации
+            filter_value (str): Значение параметра фильтрации
+        """
         if filter_key and filter_value:
             self.vacancies = list(
                 filter(lambda vacancy: self.check_vacancy(vacancy, filter_key, filter_value), self.vacancies))
 
     def sorter(self, sorting_parameter=None, reverse_sort=False):
+        """Выполняет сортировку списка вакансий, если задан параметр сортировки.
+
+        Args:
+            sorting_parameter (str): Параметр сортировки
+            reverse_sort (bool): Флаг сортировки в обратном порядке (True, если требуется отсортировать в обратном порядке)
+        """
         if sorting_parameter:
             if sorting_parameter == "Название":
                 self.vacancies.sort(key=lambda v: v.name, reverse=reverse_sort)
@@ -121,6 +218,14 @@ class DataSet:
                 self.vacancies.sort(key=lambda v: v.published_at, reverse=reverse_sort)
 
     def convert_experience_to_int(self, experience: str):
+        """Преобразует требуемый опыт в число, используемое для дальнейшего сравнения.
+
+        Args:
+            experience (str): Опыт работы
+
+        Returns:
+            int: Опыт работы в виде числа
+        """
         if experience == "noExperience":
             return 0
         elif experience == "between1And3":
@@ -131,6 +236,16 @@ class DataSet:
             return 3
 
     def check_vacancy(self, vacancy: "Vacancy", filter_key, filter_value):
+        """Проверяет вакансию на соответствие значения параметра фильтрации.
+
+        Args:
+            vacancy (Vacancy): Вакансия
+            filter_key (str): Параметр фильтрации
+            filter_value (str): Значение параметра фильтрации
+
+        Returns:
+            bool: True, если вакансия соответствует фильтру, иначе False.
+        """
         if filter_key == "Название":
             return vacancy.name == filter_value
         elif filter_key == "Описание":
@@ -164,6 +279,21 @@ class DataSet:
 
 
 class InputConnect:
+    """Класс для ввода и вывода данных.
+
+    Attributes:
+        experience_naming (dict): (class attribute) Словарь для перевода опыта с английского на русский
+        salary_gross_naming (dict): (class attribute) Словарь для перевода гросс с английского на русский
+        currency_naming (dict): (class attribute) Словарь для перевода идентификатора валюты оклада на русский
+        valid_keys (list): (class attribute) Корректные названия параметров для фильтрации и сортировки
+        columns (list): (class attribute) Столбцы для вывода таблицы
+        csv_file_name (str): Имя csv файла
+        filter_parameter (list): Параметр фильтрации и его значение
+        sorting_parameter (list): Параметр сортировки и его значение
+        is_sorting_parameter_reverse (bool): Флаг сортировки в обратном порядке
+        vacancy_range (list): Диапазон вывода
+        columns_to_print (list): Требуемые столбцы для вывода таблицы
+    """
 
     experience_naming = {"noExperience": "Нет опыта", "between1And3": "От 1 года до 3 лет",
                          "between3And6": "От 3 до 6 лет", "moreThan6": "Более 6 лет"}
@@ -186,6 +316,14 @@ class InputConnect:
                "Название региона", "Дата публикации вакансии"]
 
     def print_vacancies(self, vacancies, vacancy_from, vacancy_to, columns_to_print):
+        """Печатает таблицу с вакансиями на экран.
+
+        Args:
+            vacancies (list): Список вакансий для печати
+            vacancy_from (int): Нижняя граница диапазона вывода
+            vacancy_to (int): Верхняя граница диапазона вывода
+            columns_to_print (list): Требуемые столбцы для вывода таблицы
+        """
         table = prettytable.PrettyTable()
         table.field_names = ['№'] + self.columns
         table.max_width = 20
@@ -214,11 +352,20 @@ class InputConnect:
         print(table.get_string(start=vacancy_from, end=vacancy_to, fields=['№'] + list(columns_to_print)))
 
     def shorten_string(self, s):
+        """Возвращает укороченную до 100-и символов строку, если её длина превышает 100 символов, иначе исходную строку.
+
+        Args:
+            s (str): Строка
+
+        Returns:
+            str: Укороченная  или исходная строка
+        """
         if len(s) > 100:
             return f"{s[:100]}..."
         return s
 
     def ask_user(self):
+        """Получает необходимые данные ввода от пользователя."""
         self.csv_file_name = input("Введите название файла: ")
         # self.csv_file_name = "vacancies_medium.csv"
         self.filter_parameter = input("Введите параметр фильтрации: ").split(": ")
@@ -233,6 +380,11 @@ class InputConnect:
         self.filter_key = self.filter_parameter[0]
 
     def check_input(self):
+        """Проверяет на корректность введенные пользователем данные.
+
+        Returns:
+            bool: True, если данные введены корректно, иначе False
+        """
         if len(self.filter_parameter) == 1 and self.filter_key != '':
             print("Формат ввода некорректен")
             return False
@@ -248,6 +400,8 @@ class InputConnect:
         return True
 
     def __init__(self):
+        """Инициализирует объект класса InputConnect и обрабатывает данные вакансий при корректности введенных
+        пользователем данных."""
         self.ask_user()
         if self.check_input():
             data_set = DataSet(self.csv_file_name)

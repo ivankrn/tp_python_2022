@@ -16,8 +16,24 @@ import numpy as np
 
 
 class Vacancy:
+    """Класс для представления вакансии.
+
+    Attributes:
+        name (str): Название вакансии
+        salary (Salary): Оклад вакансии
+        area_name (str): Регион вакансии
+        published_at (datetime): Время публикации вакансии
+    """
 
     def __init__(self, name: str, salary: "Salary", area_name: str, published_at: str):
+        """Инициализирует объект Vacancy, выполняет конвертацию для поля published_at (в datetime).
+
+        Args:
+            name (str): Название вакансии
+            salary (Salary): Оклад вакансии
+            area_name (str): Регион вакансии
+            published_at (str): Время публикации вакансии
+        """
         self.name = name
         self.salary = salary
         self.area_name = area_name
@@ -25,6 +41,15 @@ class Vacancy:
 
 
 class Salary:
+    """Класс для представления зарплаты.
+
+    Attributes:
+        currency_to_rub (dict): (class attribute) Словарь для конвертации валют в рубль по курсу
+        salary_from (int): Нижняя граница вилки оклада
+        salary_to (int): Верхняя граница вилки оклада
+        salary_currency (str): Валюта оклада
+    """
+
     currency_to_rub = {
         "AZN": 35.68,
         "BYR": 23.91,
@@ -39,11 +64,23 @@ class Salary:
     }
 
     def __init__(self, salary_from: int, salary_to: int, salary_currency: str):
+        """Инициализирует объект Salary.
+
+        Args:
+            salary_from (int): Нижняя граница вилки оклада
+            salary_to (int): Верхняя граница вилки оклада
+            salary_currency (str): Валюта оклада
+        """
         self.salary_from = salary_from
         self.salary_to = salary_to
         self.salary_currency = salary_currency
 
     def get_rub_average(self):
+        """Вычисляет среднюю зарплату из вилки оклада и переводит в рубли, если необходимо.
+
+        Returns:
+            float: Средняя зарплата в рублях
+        """
         salary_average = (self.salary_from + self.salary_to) / 2
         if self.salary_currency == "RUR":
             return salary_average
@@ -51,30 +88,82 @@ class Salary:
 
 
 class DataSet:
+    """Класс для представления данных вакансий.
+
+    Attributes:
+        __file_name (str): Имя файла для обработки данных
+        __list_naming (list): Названия столбцов таблицы
+        reader (_reader): Объект чтения для чтения строк из файла
+        vacancies (list): Список вакансий
+        salary_by_year (dict): Словарь средней зарплаты по годам
+        vacancies_count_by_year (dict): Словарь количества вакансий по годам
+        selected_vacancy_salary_by_year (dict): Словарь средней зарплаты выбранной профессии по годам
+        selected_vacancy_count_by_year (dict): Словарь количества выбранной профессии по годам
+        vacancies_count_by_area (dict): Словарь количества вакансий по городам
+        salary_by_area (dict): Словарь средней зарплаты по городам
+        salary_by_area_appropriate (dict): Отсортированный по убыванию словарь средней зарплаты по городам, чья доля по
+        количеству вакансий больше 1 процента от общего числа вакансий
+        fraction_by_area (dict): Словарь доли вакансий от общего числа вакансий по городам
+        fraction_by_area_appropriate (dict): Отсортированный по убыванию словарь доли вакансий от общего числа вакансий
+        по городам, чья доля по количеству вакансий больше 1 процента от общего числа вакансий
+        salary_by_area_sliced (dict): Отсортированный по убыванию словарь средней зарплаты по городам, содержащий только
+        первые 10 элементов
+        fraction_by_area_sliced (dict): Отсортированный по убыванию словарь доли вакансий по городам, содержащий только
+        первые 10 элементов
+    """
 
     def __init__(self, file_name: str):
+        """Инициализирует объект DataSet.
+
+        Args:
+            file_name (str): Имя файла для обработки данных
+        """
         self.__file_name = file_name
         self.__list_naming = None
 
     def get_clear_value(self, value):
+        """Возвращает новый список, состоящий из строк исходного списка, очищенных от html тегов и лишних пробелов.
+
+        Args:
+            value (list): Список строк для очистки
+
+        Returns:
+            list: Список строк, очищенных от html тегов и лишних пробелов
+        """
         temp = value.split('\n')
         result = [self.get_clear_str(s) for s in temp]
         return '\n'.join(result)
 
     def get_clear_str(self, s):
+        """Очищает строку от html тегов и лишних пробелов.
+
+        Args:
+            s (str): Строка для очистки
+
+        Returns:
+            str: Строка, очищенная от html тегов и лишних пробелов
+        """
         str_without_tags = re.sub("<.*?>", '', s)
         str_without_spaces = ' '.join(str_without_tags.split())
         return str_without_spaces
 
     def is_empty_file(self):
+        """Возвращает True, если файл пуст, либо False, если файл не пуст.
+
+        Returns:
+            bool: True или False
+        """
         return False if self.__list_naming else True
 
     def csv_reader(self):
+        """Открывает файл для чтения и получает названия столбцов csv файла."""
         vacancies = open(self.__file_name, 'r', encoding="utf-8-sig")
         self.reader = csv.reader(vacancies)
         self.__list_naming = next(self.reader)
 
     def csv_filter(self):
+        """Считывает вакансии из файла, содержащие все необходимые данные, очищает их от лишних пробелов и html тегов
+         и сохраняет их в список вакансий."""
         self.vacancies = []
         for line in self.reader:
             if len(line) == len(self.__list_naming) and '' not in line:
@@ -90,6 +179,11 @@ class DataSet:
                 self.vacancies.append(vacancy)
 
     def get_statistics(self, selected_vacancy: str):
+        """Производит расчет статистики по требуемой профессии.
+
+        Args:
+            selected_vacancy (str): Профессия, по которой требуется получить статистику
+        """
         self.salary_by_year = {}
         self.vacancies_count_by_year = {}
         self.selected_vacancy_salary_by_year = {}
@@ -147,8 +241,19 @@ class DataSet:
 
 
 class InputConnect:
+    """Класс для ввода и вывода данных.
+
+    Attributes:
+        csv_file_name (str): Имя csv файла
+        vacancy_name (str): Название профессии
+    """
 
     def print_statistics(self, data_set: DataSet):
+        """Печатает статистику на экран.
+
+        Args:
+            data_set (DataSet): Дата-сет статистики
+        """
         print(f"Динамика уровня зарплат по годам: {data_set.salary_by_year}")
         print(f"Динамика количества вакансий по годам: {data_set.vacancies_count_by_year}")
         print(f"Динамика уровня зарплат по годам для выбранной профессии: {data_set.selected_vacancy_salary_by_year}")
@@ -160,14 +265,24 @@ class InputConnect:
             f"Доля вакансий по городам (в порядке убывания): {data_set.fraction_by_area_sliced}")
 
     def ask_user(self):
+        """Получает необходимые данные ввода от пользователя."""
         self.csv_file_name = input("Введите название файла: ")
         # self.csv_file_name = "vacancies_by_year.csv"
         self.vacancy_name = input("Введите название профессии: ")
 
     def check_input(self):
-        return True
+        """Проверяет на корректность введенные пользователем данные.
+
+        Returns:
+            bool: True, если данные введены корректно, иначе False
+        """
+        if self.csv_file_name and self.vacancy_name:
+            return True
+        return False
 
     def __init__(self):
+        """Инициализирует объект класса InputConnect и создает отчет по статистике при корректности введенных
+        пользователем данных."""
         self.ask_user()
         if self.check_input():
             data_set = DataSet(self.csv_file_name)
@@ -178,10 +293,7 @@ class InputConnect:
             if not data_set.is_empty_file():
                 data_set.csv_filter()
                 if len(data_set.vacancies) == 0:
-                    if data_set.vacancies_length_before_filtering != 0:
-                        print("Ничего не найдено")
-                    else:
-                        print("Нет данных")
+                    print("Нет данных")
                 else:
                     data_set.get_statistics(self.vacancy_name)
                     Report.generate_excel(data_set.salary_by_year, data_set.selected_vacancy_salary_by_year,
@@ -200,6 +312,15 @@ class InputConnect:
 
 
 class Report:
+    """Класс для представления отчёта.
+
+    Attributes:
+        excel_output_filename (str): (class attribute) Имя сгенерированного файла таблицы Excel
+        plot_output_filename (str): (class attribute) Имя сгенерированного файла с графиками
+        pdf_output_filename (str): (class attribute) Имя сгенерированного файла отчёта pdf
+        bold_font (Font): (class attribute) Жирный шрифт для Excel
+        thin_botder (Border): (class attribute) Тонкая рамка для Excel
+    """
     excel_output_filename = "report.xlsx"
     plot_output_filename = "graph.png"
     pdf_output_filename = "report.pdf"
@@ -211,6 +332,11 @@ class Report:
 
     @staticmethod
     def adjust_columns_width(sheet: Worksheet):
+        """Подгоняет ширину столбцов таблицы под их содержимое.
+
+        Args:
+            sheet (Worksheet): Лист, для которого требуется подогнать ширину столбцов
+        """
         for column_cells in sheet.columns:
             new_column_length = max(len(str(cell.value)) for cell in column_cells)
             new_column_letter = (get_column_letter(column_cells[0].column))
@@ -219,6 +345,15 @@ class Report:
 
     @staticmethod
     def apply_thin_border(sheet: Worksheet, begin_row_i, begin_col_i, end_row_i, end_col_i):
+        """Обводит выбранную область тонкой рамкой.
+
+        Args:
+            sheet (Worksheet): Лист, на котором требуется выполнить обводку
+            begin_row_i (int): Индекс начальной строки
+            begin_col_i (int): Индекс начального столбца
+            end_row_i (int): Индекс конечной строки
+            end_col_i (int): Индекс конечного столбца
+        """
         for row in sheet.iter_rows(min_row=begin_row_i, min_col=begin_col_i, max_row=end_row_i, max_col=end_col_i):
             for cell in row:
                 cell.border = Report.thin_border
@@ -228,6 +363,17 @@ class Report:
                        vacancies_count_by_year: dict,
                        selected_vacancy_count_by_year: dict, salary_by_area: dict, fraction_by_area: dict,
                        vacancy_name: str):
+        """Создаёт файл таблицы Excel на основе переданных данных.
+
+        Args:
+            salary_by_year (dict): Словарь средней зарплаты по годам
+            selected_vacancy_salary_by_year (dict): Словарь средней зарплаты по годам для выбранной профессии
+            vacancies_count_by_year (dict): Словарь количества вакансий по годам
+            selected_vacancy_count_by_year (dict): Словарь количества вакансий по годам для выбранной профессии
+            salary_by_area (dict): Словарь средней зарплаты по городам
+            fraction_by_area (dict): Словарь доли вакансий от общего числа вакансий по городам
+            vacancy_name (str): Выбранная профессия
+        """
         wb = Workbook()
         ws1 = wb.active
         Report.fill_year_sheet(ws1, salary_by_year, selected_vacancy_salary_by_year, vacancies_count_by_year,
@@ -240,6 +386,16 @@ class Report:
     def fill_year_sheet(sheet: Worksheet, salary_by_year: dict, selected_vacancy_salary_by_year: dict,
                         vacancies_count_by_year: dict,
                         selected_vacancy_count_by_year: dict, vacancy_name: str):
+        """Заполняет лист таблицы статистикой по годам.
+
+        Args:
+            sheet (Worksheet): Лист, который требуется заполнить статистикой по годам
+            salary_by_year (dict): Словарь средней зарплаты по годам
+            selected_vacancy_salary_by_year (dict): Словарь средней зарплаты по годам для выбранной профессии
+            vacancies_count_by_year (dict): Словарь количества вакансий по годам
+            selected_vacancy_count_by_year (dict): Словарь количества вакансий по годам для выбранной профессии
+            vacancy_name (str): Выбранная профессия
+        """
         sheet.title = "Статистика по годам"
         sheet["A1"] = "Год"
         sheet["A1"].font = Report.bold_font
@@ -265,6 +421,13 @@ class Report:
 
     @staticmethod
     def fill_area_sheet(sheet: Worksheet, salary_by_area: dict, fraction_by_area: dict):
+        """Заполняет лист таблицы статистикой по городам.
+
+        Args:
+            sheet (Worksheet): Лист, который требуется заполнить статистикой по городам
+            salary_by_area (dict): Словарь средней зарплаты по городам
+            fraction_by_area (dict): Словарь доли вакансий от общего числа вакансий по городам
+        """
         sheet.title = "Статистика по городам"
         sheet["A1"] = "Город"
         sheet["A1"].font = Report.bold_font
@@ -294,7 +457,17 @@ class Report:
                        vacancies_count_by_year: dict,
                        selected_vacancy_count_by_year: dict, salary_by_area: dict, fraction_by_area: dict,
                        vacancy_name: str):
+        """Создаёт файл графиков на основе переданных данных.
 
+        Args:
+            salary_by_year (dict): Словарь средней зарплаты по годам
+            selected_vacancy_salary_by_year (dict): Словарь средней зарплаты по годам для выбранной профессии
+            vacancies_count_by_year (dict): Словарь количества вакансий по годам
+            selected_vacancy_count_by_year (dict): Словарь количества вакансий по годам для выбранной профессии
+            salary_by_area (dict): Словарь средней зарплаты по городам
+            fraction_by_area (dict): Словарь доли вакансий от общего числа вакансий по городам
+            vacancy_name (str): Выбранная профессия
+        """
         fig, ((salary_by_year_axis, count_by_year_axis),
               (salary_by_area_axis, fraction_by_area_axis)) = plt.subplots(2, 2)
         Report.generate_salary_by_year_axis(salary_by_year_axis, salary_by_year, selected_vacancy_salary_by_year,
@@ -309,6 +482,14 @@ class Report:
     @staticmethod
     def generate_salary_by_year_axis(ax, salary_by_year: dict, selected_vacancy_salary_by_year: dict,
                                      vacancy_name: str):
+        """Создает диаграмму уровня зарплат (как общего, так и выбранной профессии) по годам.
+
+        Args:
+            ax: Подграфик, на котором следует создать диаграмму
+            salary_by_year (dict): Словарь средней зарплаты по годам
+            selected_vacancy_salary_by_year (dict): Словарь средней зарплаты по годам для выбранной профессии
+            vacancy_name (str): Выбранная профессия
+        """
         average_salaries = [salary_by_year[year] for year in salary_by_year]
         selected_vacancy_average_salaries = [selected_vacancy_salary_by_year[year] for year in
                                              selected_vacancy_salary_by_year]
@@ -328,6 +509,14 @@ class Report:
     @staticmethod
     def generate_count_by_year_axis(ax, vacancies_count_by_year: dict, selected_vacancy_count_by_year: dict,
                                     vacancy_name: str):
+        """Создает диаграмму количества вакансий (как общего, так и выбранной профессии) по годам.
+
+        Args:
+            ax: Подграфик, на котором следует создать диаграмму
+            vacancies_count_by_year (dict): Словарь количества вакансий по годам
+            selected_vacancy_count_by_year (dict): Словарь количества вакансий по годам для выбранной профессии
+            vacancy_name (str): Выбранная профессия
+        """
         vacancies_count = [vacancies_count_by_year[year] for year in vacancies_count_by_year]
         selected_vacancy_count = [selected_vacancy_count_by_year[year] for year in
                                   selected_vacancy_count_by_year]
@@ -346,6 +535,12 @@ class Report:
 
     @staticmethod
     def generate_salary_by_area_axis(ax, salary_by_area: dict):
+        """Создает горизонтальную диаграмму уровня зарплат по городам.
+
+        Args:
+            ax: Подграфик, на котором следует создать диаграмму
+            salary_by_area (dict): Словарь средней зарплаты по городам
+        """
         average_salary = [salary_by_area[area] for area in salary_by_area]
         area_labels = [Report.string_break_line(area) for area in salary_by_area]
         y = np.arange(len(area_labels))
@@ -359,6 +554,12 @@ class Report:
 
     @staticmethod
     def generate_fraction_by_area_axis(ax, fraction_by_area: dict):
+        """Создает круговую диаграмму количества вакансий по городам.
+
+        Args:
+            ax: Подграфик, на котором следует создать диаграмму
+            fraction_by_area (dict): Словарь доли вакансий от общего числа вакансий по городам
+        """
         fraction = [fraction_by_area[area] for area in fraction_by_area]
         others_fraction = 1 - sum(fraction)
         fraction = [others_fraction] + fraction
@@ -369,6 +570,17 @@ class Report:
     @staticmethod
     def generate_pdf(salary_by_year: dict, selected_vacancy_salary_by_year: dict, vacancies_count_by_year: dict,
                      selected_vacancy_count_by_year: dict, salary_by_area: dict, fraction_by_area: dict, vacancy_name: str):
+        """Создает файл отчета pdf на основе переданных данных.
+
+        Args:
+            salary_by_year (dict): Словарь средней зарплаты по годам
+            selected_vacancy_salary_by_year (dict): Словарь средней зарплаты по годам для выбранной профессии
+            vacancies_count_by_year (dict): Словарь количества вакансий по годам
+            selected_vacancy_count_by_year (dict): Словарь количества вакансий по годам для выбранной профессии
+            salary_by_area (dict): Словарь средней зарплаты по городам
+            fraction_by_area (dict): Словарь доли вакансий от общего числа вакансий по городам
+            vacancy_name (str): Выбранная профессия
+        """
         env = Environment(loader=FileSystemLoader('.'))
         template = env.get_template("pdf_template.html")
         abs_path_to_img = f"file:///{os.path.abspath(Report.plot_output_filename)}"
@@ -384,6 +596,15 @@ class Report:
 
     @staticmethod
     def string_break_line(s: str):
+        """Возвращает исходную строку, если она не содержит пробелов и дефисов, иначе возвращает строку, разделенную
+        переносами.
+
+        Args:
+            s (str): Строка
+
+        Returns:
+            str: Строка, разделенная переносами
+        """
         str_splitted_by_space = s.split()
         str_splitted_by_hyphen = s.split('-')
         if len(str_splitted_by_space) == len(str_splitted_by_hyphen) == 1:

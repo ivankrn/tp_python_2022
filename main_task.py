@@ -3,10 +3,10 @@ import task_statistics
 
 
 class Launcher:
-
-    very_important_var = "Очень важная переменная"
+    """Класс для запуска выбранной пользователем программы"""
 
     def __init__(self):
+        """Инициализирует объект класса Launcher и запускает выбранную пользователем программу."""
         self.output_type = input()
         if self.output_type == "Вакансии":
             app = task_table.InputConnect()
