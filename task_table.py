@@ -33,6 +33,34 @@ class Vacancy:
             salary (Salary): Оклад вакансии
             area_name (str): Регион вакансии
             published_at (str): Время публикации вакансии
+
+        >>> Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").name
+        'Программист'
+        >>> Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").description
+        'Описание вакансии'
+        >>> Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").key_skills
+        ['Python', 'Git']
+        >>> Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").experience_id
+        'between1And3'
+        >>> Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").premium
+        False
+        >>> Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").employer_name
+        'ООО Рога и Копыта'
+        >>> Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").salary.get_rub_average()
+        25000.0
+        >>> Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").area_name
+        'Екатеринбург'
+        >>> Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300").published_at
+        datetime.datetime(2022, 11, 23, 0, 0, tzinfo=datetime.timezone(datetime.timedelta(seconds=10800)))
         """
         self.name = name
         self.description = description
@@ -87,6 +115,15 @@ class Salary:
 
         Returns:
             float: Средняя зарплата в рублях
+
+        >>> Salary(20000, 20000, "Да", "RUR").get_rub_average()
+        20000.0
+        >>> Salary(20000.0, 30000, "Да", "RUR").get_rub_average()
+        25000.0
+        >>> Salary(20000, 30000.0, "Да", "RUR").get_rub_average()
+        25000.0
+        >>> Salary(3000, 5000, "Да", "USD").get_rub_average()
+        242640.0
         """
         salary_average = (self.salary_from + self.salary_to) / 2
         if self.salary_currency == "RUR":
@@ -114,20 +151,30 @@ class DataSet:
         self.__file_name = file_name
         self.__list_naming = None
 
-    def get_clear_value(self, value: list):
-        """Возвращает новый список, состоящий из строк исходного списка, очищенных от html тегов и лишних пробелов.
+    @staticmethod
+    def get_clear_value(value: str):
+        """Разделяет исходную строку по символу переноса строки, после чего очищает каждую отдельную строку от html тегов
+        и лишних пробелов и возвращает строку, объединенную символами переноса строки.
 
         Args:
-            value (list): Список строк для очистки
+            value (str): Список строк для очистки
 
         Returns:
-            list: Список строк, очищенных от html тегов и лишних пробелов
+            str: Строка, состоящая из объединненых символами переноса строки строк, очищенных от html тегов и лишних пробелов
+
+        >>> DataSet.get_clear_value("<span>Текст</span>\\n<h1>Заголовок 1   уровня</h1>\\n1   2   3")
+        'Текст\\nЗаголовок 1 уровня\\n1 2 3'
+        >>> DataSet.get_clear_value("<h1>Без переноса</h1> строк")
+        'Без переноса строк'
+        >>> DataSet.get_clear_value("Без html-тегов\\nи лишних пробелов")
+        'Без html-тегов\\nи лишних пробелов'
         """
         temp = value.split('\n')
-        result = [self.get_clear_str(s) for s in temp]
+        result = [DataSet.get_clear_str(s) for s in temp]
         return '\n'.join(result)
 
-    def get_clear_str(self, s: str):
+    @staticmethod
+    def get_clear_str(s: str):
         """Очищает строку от html тегов и лишних пробелов.
 
         Args:
@@ -135,6 +182,13 @@ class DataSet:
 
         Returns:
             str: Строка, очищенная от html тегов и лишних пробелов
+
+        >>> DataSet.get_clear_str("<p>Paragraph</p>")
+        'Paragraph'
+        >>> DataSet.get_clear_str("one two    three   4")
+        'one two three 4'
+        >>> DataSet.get_clear_str("<div><h1>Заголовок    1 уровня</h1></div>")
+        'Заголовок 1 уровня'
         """
         str_without_tags = re.sub("<.*?>", '', s)
         str_without_spaces = ' '.join(str_without_tags.split())
@@ -160,19 +214,19 @@ class DataSet:
         self.vacancies = []
         for line in self.reader:
             if len(line) == len(self.__list_naming) and '' not in line:
-                name = self.get_clear_value(line[0])
-                description = self.get_clear_value(line[1])
-                key_skills = self.get_clear_value(line[2]).split('\n')
-                experience_id = self.get_clear_value(line[3])
-                premium = self.get_clear_value(line[4])
-                employer_name = self.get_clear_value(line[5])
-                salary_from = int(float(self.get_clear_value(line[6])))
-                salary_to = int(float(self.get_clear_value(line[7])))
-                salary_gross = self.get_clear_value(line[8])
-                salary_currency = self.get_clear_value(line[9])
+                name = DataSet.get_clear_value(line[0])
+                description = DataSet.get_clear_value(line[1])
+                key_skills = DataSet.get_clear_value(line[2]).split('\n')
+                experience_id = DataSet.get_clear_value(line[3])
+                premium = DataSet.get_clear_value(line[4])
+                employer_name = DataSet.get_clear_value(line[5])
+                salary_from = int(float(DataSet.get_clear_value(line[6])))
+                salary_to = int(float(DataSet.get_clear_value(line[7])))
+                salary_gross = DataSet.get_clear_value(line[8])
+                salary_currency = DataSet.get_clear_value(line[9])
                 salary = Salary(salary_from, salary_to, salary_gross, salary_currency)
-                area_name = self.get_clear_value(line[10])
-                published_at = self.get_clear_value(line[11])
+                area_name = DataSet.get_clear_value(line[10])
+                published_at = DataSet.get_clear_value(line[11])
                 vacancy = Vacancy(name, description, key_skills, experience_id, premium, employer_name, salary,
                                   area_name, published_at)
                 salary.rub_average = salary.get_rub_average()
@@ -188,7 +242,7 @@ class DataSet:
         """
         if filter_key and filter_value:
             self.vacancies = list(
-                filter(lambda vacancy: self.check_vacancy(vacancy, filter_key, filter_value), self.vacancies))
+                filter(lambda vacancy: DataSet.check_vacancy(vacancy, filter_key, filter_value), self.vacancies))
 
     def sorter(self, sorting_parameter=None, reverse_sort=False):
         """Выполняет сортировку списка вакансий, если задан параметр сортировки.
@@ -235,7 +289,8 @@ class DataSet:
         else:
             return 3
 
-    def check_vacancy(self, vacancy: "Vacancy", filter_key, filter_value):
+    @staticmethod
+    def check_vacancy(vacancy: "Vacancy", filter_key, filter_value):
         """Проверяет вакансию на соответствие значения параметра фильтрации.
 
         Args:
@@ -245,6 +300,22 @@ class DataSet:
 
         Returns:
             bool: True, если вакансия соответствует фильтру, иначе False.
+
+        >>> DataSet.check_vacancy(Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300"), "Название", "Аналитик")
+        False
+        >>> DataSet.check_vacancy(Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300"), "Название", "Программист")
+        True
+        >>> DataSet.check_vacancy(Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300"), "Опыт работы", "От 1 года до 3 лет")
+        True
+        >>> DataSet.check_vacancy(Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300"), "Навыки", "Python")
+        True
+        >>> DataSet.check_vacancy(Vacancy("Программист", "Описание вакансии", ["Python", "Git"], "between1And3", "Нет", "ООО Рога и Копыта",
+        ... Salary(20000, 30000, "Да", "RUR"), "Екатеринбург", "2022-11-23T00:00:00+0300"), "Оклад", 21000)
+        True
         """
         if filter_key == "Название":
             return vacancy.name == filter_value
