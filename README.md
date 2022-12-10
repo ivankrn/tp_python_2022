@@ -15,3 +15,9 @@
 
 Результат разделения csv по годам:
 ![Csv splitting result](images/splitted_csv_result.png)
+
+Результат замеров профилизатора для многопоточности:
+1. без multiprocessing  
+![Without multiprocessing result](images/without_multiprocessing_result.png)
+2. c multiprocessing  
+![With multiprocessing result](images/with_multiprocessing_result.png)
