@@ -3,3 +3,4 @@ venv/
 vacancies_by_year.csv
 vacancies_medium.csv
 __pycache__/
+/splitted_csv/

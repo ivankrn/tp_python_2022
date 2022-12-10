@@ -6,9 +6,12 @@
 ![Unittest results](images/unittest_results.png)
 
 Результаты замеров профилизатора:
-1. strptime
+1. strptime  
 ![Strptime result](images/strptime_result.png)
-2. ручной парсинг строки и создание datetime
+2. ручной парсинг строки и создание datetime  
 ![String parsing result](images/string_parsing_result.png)
-3. dateutil.parser
+3. dateutil.parser  
 ![Dateutil parser result](images/dateutil_parser_result.png)
+
+Результат разделения csv по годам:
+![Csv splitting result](images/splitted_csv_result.png)
