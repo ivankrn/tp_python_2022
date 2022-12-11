@@ -1,4 +1,5 @@
 import cProfile
+import concurrent.futures
 import csv
 import re
 import itertools
@@ -274,13 +275,17 @@ class DataSet:
         """Открывает csv файлы, разделенные по годам, для чтения и заполняет список вакансий по годам."""
         csv_files_by_years_dir_path = "./splitted_csv/"
         years_filenames = [f for f in os.listdir(csv_files_by_years_dir_path) if isfile(join(csv_files_by_years_dir_path, f))]
+
         pool = mp.Pool(processes=4)
-        for year_filename in years_filenames:
-            year = int(year_filename.split('.')[0])
-            path_to_year_csv = "./splitted_csv/" + year_filename
-            pool.apply_async(self.fill_vacancies_by_year(path_to_year_csv, year))
-        pool.close()
-        pool.join()
+        with mp.Manager() as manager:
+            vacancies_by_year = manager.dict()
+            for year_filename in years_filenames:
+                year = int(year_filename.split('.')[0])
+                path_to_year_csv = csv_files_by_years_dir_path + year_filename
+                pool.apply_async(DataSet.fill_vacancies_by_year, args=(vacancies_by_year, path_to_year_csv, year))
+            pool.close()
+            pool.join()
+            self.vacancies_by_year = dict(vacancies_by_year)
 
     @staticmethod
     def get_csv_reader_by_year(path_to_year_csv: str):
@@ -297,16 +302,17 @@ class DataSet:
         list_naming = next(reader_by_year)
         return reader_by_year, list_naming
 
-    def parse_vacancies_from_csv_by_year(self, reader_by_year, list_naming, year: int):
+    @staticmethod
+    def parse_vacancies_from_csv_by_year(vacancies_by_year: dict, reader_by_year, list_naming, year: int):
         """Заполняет список вакансий по указанному году, используя переданный csv reader.
 
         Args:
+            vacancies_by_year (dict): Словарь, содержащий списки вакансий по годам
             reader_by_year: Сsv reader для указанного года
             list_naming (list): Список столбцов
             year (int): Год
         """
-        if year not in self.vacancies_by_year:
-            self.vacancies_by_year[year] = []
+        vacancies = []
         for line in reader_by_year:
             if len(line) == len(list_naming) and '' not in line:
                 name = line[0]
@@ -318,43 +324,56 @@ class DataSet:
                 published_at = line[5]
                 vacancy = Vacancy(name, salary, area_name, published_at)
                 salary.rub_average = salary.get_rub_average()
-                self.vacancies_by_year[year].append(vacancy)
+                vacancies.append(vacancy)
+        vacancies_by_year[year] = vacancies
 
-    def fill_vacancies_by_year(self, path_to_year_csv: str, year: int):
+    @staticmethod
+    def fill_vacancies_by_year(vacancies_by_year: dict, path_to_year_csv: str, year: int):
         """Заполняет список вакансий по указанному csv файлу и году.
 
         Args:
+            vacancies_by_year (dict): Словарь, содержащий списки вакансий по годам
             path_to_year_csv (str): Путь до csv файла, содержащий вакансии за указанный год
             year (int): Год
         """
         reader_by_year, list_naming = DataSet.get_csv_reader_by_year(path_to_year_csv)
-        self.parse_vacancies_from_csv_by_year(reader_by_year, list_naming, year)
+        DataSet.parse_vacancies_from_csv_by_year(vacancies_by_year, reader_by_year, list_naming, year)
 
-    def process_statistics_by_year(self, year: int, selected_vacancy: str):
+    @staticmethod
+    def process_statistics_by_year(vacancies: list, salary_by_year: dict,
+                                   vacancies_count_by_year: dict, selected_vacancy_salary_by_year: dict,
+                                   selected_vacancy_count_by_year: dict, year: int, selected_vacancy: str):
         """Производит расчет статистики по требуемой профессии в указанный год.
 
         Args:
+            vacancies (list): Список вакансий для обработки
+            salary_by_year (dict): Словарь зарплат по годам
+            vacancies_count_by_year (dict): Словарь количества вакансий по годам
+            selected_vacancy_salary_by_year (dict): Словарь зарплат по годам для выбранной профессии
+            selected_vacancy_count_by_year (dict): Словарь количества вакансий по годам для выбранной профессии
             year (int): Год
             selected_vacancy (str): Профессия, по которой требуется получить статистику
         """
-        for vacancy in self.vacancies_by_year[year]:
+        salary_by_year_result = 0
+        vacancies_count_by_year_result = 0
+        selected_vacancy_salary_by_year_result = 0
+        selected_vacancy_count_by_year_result = 0
+        for vacancy in vacancies:
             salary = vacancy.salary.get_rub_average()
-            if year not in self.salary_by_year:
-                self.salary_by_year[year] = 0
-                self.vacancies_count_by_year[year] = 0
-            self.salary_by_year[year] += salary
-            self.vacancies_count_by_year[year] += 1
+            salary_by_year_result += salary
+            vacancies_count_by_year_result += 1
             if selected_vacancy in vacancy.name and selected_vacancy != '':
-                if year not in self.selected_vacancy_salary_by_year:
-                    self.selected_vacancy_salary_by_year[year] = 0
-                    self.selected_vacancy_count_by_year[year] = 0
-                self.selected_vacancy_salary_by_year[year] += salary
-                self.selected_vacancy_count_by_year[year] += 1
-        self.salary_by_year[year] = int(self.salary_by_year[year] / self.vacancies_count_by_year[year])
+                selected_vacancy_salary_by_year_result += salary
+                selected_vacancy_count_by_year_result += 1
+        salary_by_year_result = int(salary_by_year_result / vacancies_count_by_year_result)
+        salary_by_year[year] = salary_by_year_result
+        vacancies_count_by_year[year] = vacancies_count_by_year_result
         if selected_vacancy:
-            if self.selected_vacancy_salary_by_year[year] != 0:
-                self.selected_vacancy_salary_by_year[year] = int(
-                    self.selected_vacancy_salary_by_year[year] / self.selected_vacancy_count_by_year[year])
+            if selected_vacancy_salary_by_year_result != 0:
+                selected_vacancy_salary_by_year_result = int(
+                    selected_vacancy_salary_by_year_result / selected_vacancy_count_by_year_result)
+        selected_vacancy_salary_by_year[year] = selected_vacancy_salary_by_year_result
+        selected_vacancy_count_by_year[year] = selected_vacancy_count_by_year_result
 
     def process_statistics_all_years(self, selected_vacancy: str):
         """Производит расчет статистики для требуемой профессии по всем годам.
@@ -363,10 +382,24 @@ class DataSet:
             selected_vacancy (str): Профессия, по которой требуется получить статистику
         """
         pool = mp.Pool(processes=4)
-        for year in self.vacancies_by_year:
-            pool.apply_async(self.process_statistics_by_year(year, selected_vacancy))
-        pool.close()
-        pool.join()
+        with mp.Manager() as manager:
+            salary_by_year = manager.dict()
+            vacancies_count_by_year = manager.dict()
+            selected_vacancy_salary_by_year = manager.dict()
+            selected_vacancy_count_by_year = manager.dict()
+            for year in self.vacancies_by_year:
+                vacancies = self.vacancies_by_year[year]
+                pool.apply_async(DataSet.process_statistics_by_year, args=(vacancies, salary_by_year,
+                                                                           vacancies_count_by_year,
+                                                                           selected_vacancy_salary_by_year,
+                                                                           selected_vacancy_count_by_year,
+                                                                           year, selected_vacancy))
+            pool.close()
+            pool.join()
+            self.salary_by_year = dict(salary_by_year)
+            self.vacancies_count_by_year = dict(vacancies_count_by_year)
+            self.selected_vacancy_salary_by_year = dict(selected_vacancy_salary_by_year)
+            self.selected_vacancy_count_by_year = dict(selected_vacancy_count_by_year)
         vacancies_count = sum([len(self.vacancies_by_year[year]) for year in self.vacancies_by_year])
         for year in self.vacancies_by_year:
             for vacancy in self.vacancies_by_year[year]:
@@ -639,7 +672,6 @@ class InputConnect:
         """Получает необходимые данные ввода от пользователя."""
         self.output_type = input()
         self.csv_file_name = input("Введите название файла: ")
-        # self.csv_file_name = "vacancies_medium.csv"
         if self.output_type == "Вакансии":
             self.filter_parameter = input("Введите параметр фильтрации: ").split(": ")
             self.sorting_parameter = input("Введите параметр сортировки: ")
