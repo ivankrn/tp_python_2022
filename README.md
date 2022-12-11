@@ -21,3 +21,5 @@
 ![Without multiprocessing result](images/without_multiprocessing_result.png)
 2. c multiprocessing  
 ![With multiprocessing result](images/with_multiprocessing_result.png)
+3. с concurrent  
+![With concurrent result](images/with_concurrent_result.png)
