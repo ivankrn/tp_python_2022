@@ -23,3 +23,6 @@
 ![With multiprocessing result](images/with_multiprocessing_result.png)
 3. с concurrent  
 ![With concurrent result](images/with_concurrent_result.png)
+
+Частотность валют за 2003 - 2022 года:
+![Currency frequency](images/currency_frequency.png)

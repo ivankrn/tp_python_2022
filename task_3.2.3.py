@@ -278,7 +278,7 @@ class DataSet:
         with mp.Manager() as manager:
             vacancies_by_year = manager.dict()
             years = [int(year_filename.split('.')[0]) for year_filename in years_filenames]
-            paths = ["./splitted_csv/" + year_filename for year_filename in years_filenames]
+            paths = [csv_files_by_years_dir_path + year_filename for year_filename in years_filenames]
             with concurrent.futures.ProcessPoolExecutor(4) as executor:
                 executor.map(DataSet.fill_vacancies_by_year, itertools.repeat(vacancies_by_year), paths, years)
             self.vacancies_by_year = dict(vacancies_by_year)

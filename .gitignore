@@ -2,5 +2,6 @@ venv/
 .idea/
 vacancies_by_year.csv
 vacancies_medium.csv
+vacancies_dif_currencies.csv
 __pycache__/
 /splitted_csv/
