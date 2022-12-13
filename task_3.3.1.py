@@ -33,8 +33,9 @@ class CurrencyScraper:
         end_date_str = datetime(year, month, last_day_of_month).strftime(r"%d/%m/%Y")
         code = CurrencyScraper.currency_to_code[currency]
         url = f"https://www.cbr.ru/scripts/XML_dynamic.asp?date_req1={begin_date_str}&date_req2={end_date_str}&VAL_NM_RQ={code}"
-        response = requests.get(url).content
-        data = xmltodict.parse(response)
+        response = requests.get(url)
+        response.close()
+        data = xmltodict.parse(response.content)
         if "ValCurs" in data:
             if "Record" in data["ValCurs"]:
                 return data["ValCurs"]["Record"][0]
