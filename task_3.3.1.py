@@ -1,5 +1,4 @@
 import time
-import calendar
 from datetime import datetime
 
 import pandas as pd
@@ -28,9 +27,11 @@ class CurrencyScraper:
         Returns:
             dict: Информация о валюте
         """
-        last_day_of_month = calendar.monthrange(year, month)[1]
-        begin_date_str = datetime(year, month, 1).strftime(r"%d/%m/%Y")
-        end_date_str = datetime(year, month, last_day_of_month).strftime(r"%d/%m/%Y")
+        if month != 1:
+            begin_date_str = datetime(year, month - 1, 1).strftime(r"%d/%m/%Y")
+        else:
+            begin_date_str = datetime(year - 1, 12, 1).strftime(r"%d/%m/%Y")
+        end_date_str = datetime(year, month, 1).strftime(r"%d/%m/%Y")
         code = CurrencyScraper.currency_to_code[currency]
         url = f"https://www.cbr.ru/scripts/XML_dynamic.asp?date_req1={begin_date_str}&date_req2={end_date_str}&VAL_NM_RQ={code}"
         response = requests.get(url)
@@ -38,7 +39,7 @@ class CurrencyScraper:
         data = xmltodict.parse(response.content)
         if "ValCurs" in data:
             if "Record" in data["ValCurs"]:
-                return data["ValCurs"]["Record"][0]
+                return data["ValCurs"]["Record"][-1]
 
     @staticmethod
     def get_currency_value_by_month_year(year: int, month: int, currency: str) -> float:
@@ -116,4 +117,5 @@ class CurrencyScraper:
 
 begin_date = datetime(2003, 1, 24)
 end_date = datetime(2022, 7, 19)
+CurrencyScraper.get_currency_info_by_date(2003, 6, "USD")
 CurrencyScraper.parse_to_csv(begin_date, end_date, "exchange_rate.csv")
