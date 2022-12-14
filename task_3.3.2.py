@@ -31,11 +31,11 @@ class CurrencyConverter:
             month (int): Месяц
 
         Returns:
-            float: Эквивалент указанного количества валюты в рублях
+            int: Эквивалент указанного количества валюты в рублях
         """
         index = datetime(year, month, 1)
         rate = self.currencies_per_month_year.loc[[index]][currency][0]
-        return value * rate
+        return int(value * rate)
 
     def process_vacancies(self, path_to_vacancies_csv: str, processed_csv_filename: str):
         """Обрабатывает csv файл с вакансиями, переводя зарплаты в рубли при необходимости, и сохраняет результат в
