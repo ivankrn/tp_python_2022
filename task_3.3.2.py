@@ -1,6 +1,6 @@
-from datetime import datetime
+import csv
+import datetime
 
-import numpy as np
 import pandas as pd
 
 
@@ -17,9 +17,15 @@ class CurrencyConverter:
         Args:
             path_to_exchange_rate_csv (str): Путь до csv файла с курсами валют по месяцам и годам
         """
-        self.currencies_per_month_year = pd.read_csv(path_to_exchange_rate_csv, delimiter=',')
-        self.currencies_per_month_year["date"] = pd.to_datetime(self.currencies_per_month_year["date"], format="%Y-%m")
-        self.currencies_per_month_year = self.currencies_per_month_year.set_index("date")
+        exchange_rate = open(path_to_exchange_rate_csv, 'r', encoding="utf-8-sig")
+        csv_reader = csv.reader(exchange_rate)
+        currencies = next(csv_reader)[1:]
+        self.currencies_per_month_year = {}
+        for line in csv_reader:
+            date = line[0]
+            self.currencies_per_month_year[date] = {}
+            for i in range(len(currencies)):
+                self.currencies_per_month_year[date][currencies[i]] = float(line[i + 1])
 
     def convert_to_rubles_per_month_year(self, value: float, currency: str, year: int, month: int):
         """Конвертирует указанное количество валюты в рубли по курсу на указанный месяц и год.
@@ -33,8 +39,8 @@ class CurrencyConverter:
         Returns:
             int: Эквивалент указанного количества валюты в рублях
         """
-        index = datetime(year, month, 1)
-        rate = self.currencies_per_month_year.loc[[index]][currency][0]
+        date = f"{year}-{str(month).zfill(2)}"
+        rate = self.currencies_per_month_year[date][currency]
         return int(value * rate)
 
     def process_vacancies(self, path_to_vacancies_csv: str, processed_csv_filename: str):
@@ -45,20 +51,37 @@ class CurrencyConverter:
             path_to_vacancies_csv (str): Путь до csv файла с вакансиями
             processed_csv_filename (str): Имя файла результата
         """
-        df = pd.read_csv(path_to_vacancies_csv, delimiter=',')
-        df["published_at"] = pd.to_datetime(df["published_at"], format="%Y-%m-%dT%H:%M:%S%z")
-        df["salary"] = df[["salary_from", "salary_to"]].mean(axis=1)
-        df["salary"] = df.apply(lambda row: row["salary"] if row["salary_currency"] == "RUR"
-        else np.nan if pd.isna(row["salary_currency"])
-        else self.convert_to_rubles_per_month_year(row["salary"],
-                                                   row["salary_currency"],
-                                                   row["published_at"].year, row["published_at"].month),
-                                axis=1)
-        df.drop(["salary_from", "salary_to", "salary_currency"], axis=1, inplace=True)
-        columns = list(df.columns.values)
-        columns[1], columns[3] = columns[3], columns[1]
-        df = df[columns]
-        df.to_csv(processed_csv_filename, encoding="utf-8", index=False)
+        vacancies = open(path_to_vacancies_csv, 'r', encoding="utf-8-sig")
+        csv_reader = csv.reader(vacancies)
+        next(csv_reader)
+        data = [["name", "salary", "area_name", "published_at"]]
+        for line in csv_reader:
+            name = line[0]
+            salary_from = line[1]
+            salary_to = line[2]
+            salary_currency = line[3]
+            area_name = line[4]
+            published_at = datetime.datetime.strptime(line[5], "%Y-%m-%dT%H:%M:%S%z")
+            if salary_from == salary_to == "" or salary_currency == "":
+                salary = ""
+            elif (salary_from != "" and salary_to == "") or (salary_from == "" and salary_to != ""):
+                if salary_from != "":
+                    salary = self.convert_to_rubles_per_month_year(float(salary_from), salary_currency,
+                                                                   published_at.year, published_at.month)
+                else:
+                    salary = self.convert_to_rubles_per_month_year(float(salary_to), salary_currency,
+                                                                   published_at.year, published_at.month)
+            else:
+                mean_salary = (float(salary_from) + float(salary_to)) / 2
+                salary = self.convert_to_rubles_per_month_year(mean_salary, salary_currency,
+                                                        published_at.year, published_at.month)
+            if salary != "":
+                salary = f"{salary:.1f}"
+            data.append([name, salary, area_name, published_at.strftime("%Y-%m-%dT%H:%M:%S%z")])
+        with open(processed_csv_filename, 'w', encoding="utf-8-sig", newline='') as processed_csv:
+            csv_writer = csv.writer(processed_csv)
+            csv_writer.writerows(data)
+
 
 
 currency_converter = CurrencyConverter("exchange_rate.csv")
