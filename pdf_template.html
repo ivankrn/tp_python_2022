@@ -24,24 +24,36 @@
     </style>
 </head>
 <body>
-    <h1>Аналитика по зарплатам и городам для профессии {{ vacancy_name }}</h1>
+    <h1>Аналитика по зарплатам и городам для профессии {{ vacancy_name }} по региону {{ area_name }}</h1>
     <img src="{{ abs_path }}">
     <h2>Статистика по годам</h2>
     <table>
         <tr>
             <th>Год</th>
             <th>Cредняя зарплата</th>
-            <th>Средняя зарплата - {{ vacancy_name }}</th>
+            <th>Средняя зарплата - {{ vacancy_name }} по региону - {{ area_name }}</th>
             <th>Количество вакансий</th>
-            <th>Количество вакансий - {{ vacancy_name }}</th>
+            <th>Количество вакансий - {{ vacancy_name }} по региону - {{ area_name }}</th>
         </tr>
         {% for year in salary_by_year %}
         <tr>
             <td>{{ year }}</td>
             <td>{{ salary_by_year[year] }}</td>
-            <td>{{ selected_vacancy_salary_by_year[year] }}</td>
+            <td>
+                {% if selected_vacancy_salary_by_year[year] %}
+                    {{ selected_vacancy_salary_by_year[year] }}
+                {% else %}
+                    нет данных
+                {% endif %}
+            </td>
             <td>{{ vacancies_count_by_year[year] }}</td>
-            <td>{{ selected_vacancy_count_by_year[year] }}</td>
+            <td>
+                {% if selected_vacancy_count_by_year[year]%}
+                    {{ selected_vacancy_count_by_year[year] }}
+                {% else %}
+                    0
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </table>
