@@ -105,6 +105,6 @@ class VacancyConverter:
         df.to_csv(output_csv_filename, index=False, encoding="utf-8")
 
 
-date_to_parse = datetime(2022, 11, 21)
+date_to_parse = datetime(2022, 12, 5)
 vacancies = VacancyParser.get_vacancies_by_date(date_to_parse)
-VacancyConverter.convert_vacancies_to_csv(vacancies, "vacancies_21_11_2022.csv")
+VacancyConverter.convert_vacancies_to_csv(vacancies, "vacancies_05_12_2022.csv")
