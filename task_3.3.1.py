@@ -13,7 +13,8 @@ class CurrencyScraper:
         currency_to_code (dict): (class attribute) Словарь для конвертации идентификатора валюты в код
     """
 
-    currency_to_code = {"BYR": "R01090", "USD": "R01235", "EUR": "R01239", "KZT": "R01335", "UAH": "R01720"}
+    currency_to_code = {"BYR": "R01090", "USD": "R01235", "EUR": "R01239", "KZT": "R01335", "UAH": "R01720",
+                        "AZN": "R01020", "KGS": "R01370", "UZS": "R01717"}
 
     @staticmethod
     def get_currency_info_by_date(year: int, month: int, currency: str) -> dict:
@@ -39,6 +40,8 @@ class CurrencyScraper:
         data = xmltodict.parse(response.content)
         if "ValCurs" in data:
             if "Record" in data["ValCurs"]:
+                if isinstance(data["ValCurs"]["Record"], dict):
+                    return data["ValCurs"]["Record"]
                 return data["ValCurs"]["Record"][-1]
 
     @staticmethod
@@ -90,6 +93,13 @@ class CurrencyScraper:
 
     @staticmethod
     def parse_to_csv(begin_date: datetime, end_date: datetime, csv_filename: str):
+        """Выгружает курсы валют в интервале между указанными датами и сохраняет результат в виде csv файла.
+
+        Args:
+            begin_date (datetime): Дата, с которой необходимо выгрузить курсы валют
+            end_date (datetime): Дата, до которой необходимо выгрузить курсы валют
+            csv_filename (str): Имя csv файла результата
+        """
         currencies = {}
         for year in range(begin_date.year, end_date.year + 1):
             if year == begin_date.year == end_date.year:
@@ -115,7 +125,6 @@ class CurrencyScraper:
         df.to_csv(csv_filename, encoding="utf-8")
 
 
-begin_date = datetime(2003, 1, 24)
-end_date = datetime(2022, 7, 19)
-CurrencyScraper.get_currency_info_by_date(2003, 6, "USD")
+begin_date = datetime(2003, 1, 1)
+end_date = datetime(2022, 12, 1)
 CurrencyScraper.parse_to_csv(begin_date, end_date, "exchange_rate.csv")
