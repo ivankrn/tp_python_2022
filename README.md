@@ -26,3 +26,6 @@
 
 Частотность валют за 2003 - 2022 года:
 ![Currency frequency](images/currency_frequency.png)
+
+База данных с вакансиями:
+![Vacancies DB](images/vacancies_db.png)
