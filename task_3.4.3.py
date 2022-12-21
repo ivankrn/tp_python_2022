@@ -489,13 +489,13 @@ class DataSet:
         selected_vacancy_count_by_year = selected_vacancy_subset["publish_year"].value_counts().sort_index()
         vacancies_count_by_year = df["publish_year"].value_counts().sort_index()
         vacancies_count_by_area = df["area_name"].value_counts()
-        fraction_by_area_sliced = \
-            vacancies_count_by_area[vacancies_count_by_area * 100 / vacancies_count_by_area.sum() >= 1] \
-                .apply(lambda count_by_area: count_by_area / vacancies_count_by_area.sum()).head(10)
+        fraction_by_area = vacancies_count_by_area[vacancies_count_by_area * 100 / vacancies_count_by_area.sum() >= 1]
+        fraction_by_area_sliced = fraction_by_area\
+            .apply(lambda count_by_area: count_by_area / vacancies_count_by_area.sum()).head(10)
         salary_by_area = df.groupby("area_name")["salary"].mean()
         salary_by_area_sliced = salary_by_area[
-            salary_by_area.index.isin(fraction_by_area_sliced.index)] \
-            .sort_values(ascending=False)
+            salary_by_area.index.isin(fraction_by_area.index)] \
+            .sort_values(ascending=False).head(10)
         self.salary_by_year = salary_by_year.astype("int").to_dict()
         self.vacancies_count_by_year = vacancies_count_by_year.to_dict()
         self.vacancies_count_by_area = vacancies_count_by_area.to_dict()
