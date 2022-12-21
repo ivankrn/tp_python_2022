@@ -57,6 +57,8 @@ class CurrencyConverter:
         Returns:
             int: Эквивалент указанного количества валюты в рублях
         """
+        if currency == "RUR":
+            return int(value)
         rate = self.get_rate_at_month_year(currency, year, month)
         if rate is None:
             return None
@@ -105,4 +107,4 @@ class CurrencyConverter:
 
 
 currency_converter = CurrencyConverter("exchange_rate.sqlite")
-currency_converter.process_vacancies("vacancies_dif_currencies.csv", "vacancies.sqlite")
+currency_converter.process_vacancies("vacancies_dif_currencies.csv", "vacancies_new.sqlite")
