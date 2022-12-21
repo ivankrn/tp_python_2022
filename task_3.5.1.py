@@ -1,8 +1,8 @@
+import sqlite3
 import time
 from datetime import datetime
 
 import pandas as pd
-import sqlite3
 import xmltodict
 import requests
 
@@ -14,51 +14,36 @@ class CurrencyScraper:
         currency_to_code (dict): (class attribute) Словарь для конвертации идентификатора валюты в код
     """
 
-    currency_to_code = {"BYR": "R01090", "USD": "R01235", "EUR": "R01239", "KZT": "R01335", "UAH": "R01720",
-                        "AZN": "R01020", "KGS": "R01370", "UZS": "R01717"}
+    currencies_to_parse = ["BYR", "USD", "EUR", "KZT", "UAH", "AZN", "KGS", "UZS"]
 
     @staticmethod
-    def get_currency_info_by_date(year: int, month: int, currency: str) -> dict:
-        """Возвращает информацию о валюте в указанный месяц и год.
+    def get_exchange_rate_by_date(year: int, month: int) -> dict:
+        """Возвращает курсы валют в указанный месяц и год.
 
         Args:
             year (int): Год
             month (int): Месяц
-            currency (str): Идентификатор валюты
 
         Returns:
-            dict: Информация о валюте
+            dict: Курсы необходимых валют в указанный месяц и год
         """
-        if month != 1:
-            begin_date_str = datetime(year, month - 1, 1).strftime(r"%d/%m/%Y")
-        else:
-            begin_date_str = datetime(year - 1, 12, 1).strftime(r"%d/%m/%Y")
-        end_date_str = datetime(year, month, 1).strftime(r"%d/%m/%Y")
-        code = CurrencyScraper.currency_to_code[currency]
-        url = f"https://www.cbr.ru/scripts/XML_dynamic.asp?date_req1={begin_date_str}&date_req2={end_date_str}&VAL_NM_RQ={code}"
+        date_str = datetime(year, month, 1).strftime(r"%d/%m/%Y")
+        url = f"https://www.cbr.ru/scripts/XML_daily.asp?date_req={date_str}&d=0"
         response = requests.get(url)
         response.close()
         data = xmltodict.parse(response.content)
-        if "ValCurs" in data:
-            if "Record" in data["ValCurs"]:
-                if isinstance(data["ValCurs"]["Record"], dict):
-                    return data["ValCurs"]["Record"]
-                return data["ValCurs"]["Record"][-1]
-
-    @staticmethod
-    def get_currency_value_by_month_year(year: int, month: int, currency: str) -> float:
-        """Возвращает курс валюты по отношению к рублю в указанный месяц и год.
-
-        Args:
-            date (datetime): Дата
-            currency (str): Идентификатор валюты
-
-        Returns:
-            float: Курс валюты
-        """
-        info = CurrencyScraper.get_currency_info_by_date(year, month, currency)
-        result = float(info["Value"].replace(',', '.')) / float(info["Nominal"].replace(',', '.'))
-        return round(result, 7)
+        valutes = data["ValCurs"]["Valute"]
+        exchange_rate = {}
+        for valute in valutes:
+            currency = valute["CharCode"]
+            if currency in CurrencyScraper.currencies_to_parse:
+                valute_value = float(valute["Value"].replace(',', '.'))
+                valute_nominal = float(valute["Nominal"].replace(',', '.'))
+                exchange_rate[currency] = round(valute_value / valute_nominal, 8)
+        for currency in CurrencyScraper.currencies_to_parse:
+            if currency not in exchange_rate:
+                exchange_rate[currency] = None
+        return exchange_rate
 
     @staticmethod
     def get_month_range_day(start=None, periods=None) -> pd.Index:
@@ -112,13 +97,13 @@ class CurrencyScraper:
             else:
                 months = range(1, 12 + 1)
             for month in months:
-                for currency in CurrencyScraper.currency_to_code:
+                print(f"Получение курсов валют за {year} год, {month} месяц")
+                exchange_rate = CurrencyScraper.get_exchange_rate_by_date(year, month)
+                for currency in exchange_rate:
                     if currency not in currencies:
                         currencies[currency] = []
-                    print(f"Получение информации за год: {year}, месяц: {month}, валюту: {currency}")
-                    currency_value = CurrencyScraper.get_currency_value_by_month_year(year, month, currency)
-                    currencies[currency].append(currency_value)
-                    time.sleep(0.03)
+                    currencies[currency].append(exchange_rate[currency])
+                time.sleep(0.03)
         df = pd.DataFrame(currencies, index=CurrencyScraper.get_month_range_day(begin_date.strftime(r"%d/%m/%Y"),
                                                                 CurrencyScraper.get_month_count_between_two_dates(begin_date,
                                                                                                   end_date) + 1))
