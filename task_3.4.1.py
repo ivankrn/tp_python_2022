@@ -34,7 +34,11 @@ class CurrencyConverter:
             int: Эквивалент указанного количества валюты в рублях
         """
         index = datetime(year, month, 1)
+        if currency not in self.currencies_per_month_year.columns:
+            return None
         rate = self.currencies_per_month_year.loc[[index]][currency][0]
+        if np.isnan(rate):
+            return None
         return int(value * rate)
 
     def process_vacancies(self, path_to_vacancies_csv: str, processed_csv_filename: str):
@@ -53,11 +57,10 @@ class CurrencyConverter:
                                                    row["salary_currency"],
                                                    int(row["published_at"][:4]), int(row["published_at"][5:7])),
                                 axis=1)
-        print(df.dtypes)
         df.drop(["salary_from", "salary_to", "salary_currency"], axis=1, inplace=True)
         df = df[["name", "salary", "area_name", "published_at"]]
         df.to_csv(processed_csv_filename, encoding="utf-8", index=False)
 
 
 currency_converter = CurrencyConverter("exchange_rate.csv")
-currency_converter.process_vacancies("./splitted_csv/2003.csv", "first_100_vacancies.csv")
+currency_converter.process_vacancies("vacancies_dif_currencies.csv", "vacancies_processed_pandas.csv")
