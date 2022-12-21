@@ -25,7 +25,10 @@ class CurrencyConverter:
             date = line[0]
             self.currencies_per_month_year[date] = {}
             for i in range(len(currencies)):
-                self.currencies_per_month_year[date][currencies[i]] = float(line[i + 1])
+                if line[i + 1] != '':
+                    self.currencies_per_month_year[date][currencies[i]] = float(line[i + 1])
+                else:
+                    self.currencies_per_month_year[date][currencies[i]] = None
 
     def convert_to_rubles_per_month_year(self, value: float, currency: str, year: int, month: int):
         """Конвертирует указанное количество валюты в рубли по курсу на указанный месяц и год.
@@ -39,8 +42,14 @@ class CurrencyConverter:
         Returns:
             int: Эквивалент указанного количества валюты в рублях
         """
+        if currency == "RUR":
+            return value
         date = f"{year}-{str(month).zfill(2)}"
+        if currency not in self.currencies_per_month_year[date]:
+            return None
         rate = self.currencies_per_month_year[date][currency]
+        if not rate:
+            return None
         return int(value * rate)
 
     def process_vacancies(self, path_to_vacancies_csv: str, processed_csv_filename: str):
@@ -63,7 +72,7 @@ class CurrencyConverter:
             area_name = line[4]
             published_at = datetime.datetime.strptime(line[5], "%Y-%m-%dT%H:%M:%S%z")
             if salary_from == salary_to == "" or salary_currency == "":
-                salary = ""
+                salary = None
             elif (salary_from != "" and salary_to == "") or (salary_from == "" and salary_to != ""):
                 if salary_from != "":
                     salary = self.convert_to_rubles_per_month_year(float(salary_from), salary_currency,
@@ -75,7 +84,7 @@ class CurrencyConverter:
                 mean_salary = (float(salary_from) + float(salary_to)) / 2
                 salary = self.convert_to_rubles_per_month_year(mean_salary, salary_currency,
                                                         published_at.year, published_at.month)
-            if salary != "":
+            if salary:
                 salary = f"{salary:.1f}"
             data.append([name, salary, area_name, published_at.strftime("%Y-%m-%dT%H:%M:%S%z")])
         with open(processed_csv_filename, 'w', encoding="utf-8-sig", newline='') as processed_csv:
@@ -85,4 +94,4 @@ class CurrencyConverter:
 
 
 currency_converter = CurrencyConverter("exchange_rate.csv")
-currency_converter.process_vacancies("./splitted_csv/2003.csv", "first_100_vacancies.csv")
+currency_converter.process_vacancies("vacancies_dif_currencies.csv", "vacancies_processed.csv")
