@@ -29,3 +29,12 @@
 
 База данных с вакансиями:
 ![Vacancies DB](images/vacancies_db.png)
+
+Скриншоты для задачи 3.5.3:
+![Code screenshot](images/3.5.3_screenshot_with_code.png)
+![DB screenshot](images/3.5.3_screenshot_with_db.png)
+![Output 1](images/3.5.3_output_1.png)
+![Output 2](images/3.5.3_output_2.png)
+![Output 3](images/3.5.3_output_3.png)
+![Output 4](images/3.5.3_output_4.png)
+![Output 5](images/3.5.3_output_5.png)
