@@ -483,7 +483,7 @@ class DataSet:
         salary_by_year = df.groupby("publish_year")["salary"].mean()
         selected_vacancy_subset = df[df["name"].str.contains(selected_vacancy)]
         selected_vacancy_salary_by_year = selected_vacancy_subset.groupby("publish_year")["salary"].mean()
-        selected_vacancy_count_by_year = selected_vacancy_subset["publish_year"].value_counts()
+        selected_vacancy_count_by_year = selected_vacancy_subset["publish_year"].value_counts().sort_index()
         vacancies_count_by_year = df["publish_year"].value_counts().sort_index()
         vacancies_count_by_area = df["area_name"].value_counts()
         fraction_by_area = vacancies_count_by_area[vacancies_count_by_area * 100 / vacancies_count_by_area.sum() >= 1]
@@ -883,10 +883,10 @@ class Report:
             selected_vacancy_salary_by_year (dict): Словарь средней зарплаты по годам для выбранной профессии
             vacancy_name (str): Выбранная профессия
         """
-        average_salaries = [salary_by_year[year] for year in salary_by_year]
+        average_salaries = [salary_by_year[year] for year in selected_vacancy_salary_by_year]
         selected_vacancy_average_salaries = [selected_vacancy_salary_by_year[year] for year in
                                              selected_vacancy_salary_by_year]
-        labels = [year for year in salary_by_year]
+        labels = [year for year in selected_vacancy_salary_by_year]
         x = np.arange(len(labels))
         width = 0.35
         average_bar = ax.bar(x - width / 2, average_salaries, width, label="средняя з/п")
@@ -910,10 +910,10 @@ class Report:
             selected_vacancy_count_by_year (dict): Словарь количества вакансий по годам для выбранной профессии
             vacancy_name (str): Выбранная профессия
         """
-        vacancies_count = [vacancies_count_by_year[year] for year in vacancies_count_by_year]
+        vacancies_count = [vacancies_count_by_year[year] for year in selected_vacancy_count_by_year]
         selected_vacancy_count = [selected_vacancy_count_by_year[year] for year in
                                   selected_vacancy_count_by_year]
-        labels = [year for year in vacancies_count_by_year]
+        labels = [year for year in selected_vacancy_count_by_year]
         x = np.arange(len(labels))
         width = 0.35
         vacancies_count_bar = ax.bar(x - width / 2, vacancies_count, width, label="Количество вакансий")
